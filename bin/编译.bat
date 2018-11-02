@@ -1,0 +1,2 @@
+go install jvmgo
+pause
