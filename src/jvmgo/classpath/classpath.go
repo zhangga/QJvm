@@ -42,12 +42,15 @@ func (self *Classpath) parseUserClasspath(cpOption string) {
  * 获取jre路径
  */
 func getJreDir(jreOption string) string {
+	// 使用用户输入的-Xjre选项作为jre目录
 	if jreOption != "" && exists(jreOption) {
 		return jreOption
 	}
+	// 在当前目录下找jre目录
 	if exists("./jre") {
 		return "./jre"
 	}
+	// 使用JAVA_HOME环境变量
 	if jh := os.Getenv("JAVA_HOME"); jh != "" {
 		return filepath.Join(jh, "jre")
 	}

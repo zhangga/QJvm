@@ -1,5 +1,6 @@
 package classfile
 
+// 字段或方法
 type MemberInfo struct {
 	cp              ConstantPool
 	accessFlags     uint16
@@ -8,6 +9,7 @@ type MemberInfo struct {
 	attributes      []AttributeInfo
 }
 
+// 读取字段表或方法表
 func readMembers(reader *ClassReader, cp ConstantPool) []*MemberInfo {
 	memberCount := reader.readUint16()
 	members := make([]*MemberInfo, memberCount)
@@ -17,6 +19,7 @@ func readMembers(reader *ClassReader, cp ConstantPool) []*MemberInfo {
 	return members
 }
 
+// 读取单个字段或方法
 func readMember(reader *ClassReader, cp ConstantPool) *MemberInfo {
 	return &MemberInfo{
 		cp:              cp,
