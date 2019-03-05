@@ -33,6 +33,11 @@ func parseCmd() *Cmd {
 	if len(args) > 0 {
 		cmd.class = args[0]
 		cmd.args = args[1:]
+	} else {
+		// 调试时直接设置参数
+		cmd.class = "com.kwai.Test"
+		cmd.cpOption = "./../../bin/class/"
+		cmd.XjreOption = "C:\\JAVA\\jdk1.8\\jre\\"
 	}
 
 	return cmd

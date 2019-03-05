@@ -53,9 +53,9 @@ func getJreDir(jreOption string) string {
 	// 使用JAVA_HOME环境变量
 	if jh := os.Getenv("JAVA_HOME"); jh != "" {
 		// jdk11
-		return jh
+		// return jh
 		// jdk8
-		// return filepath.Join(jh, "jre")
+		return filepath.Join(jh, "jre")
 	}
 	panic("Can not find jre folder!")
 }
