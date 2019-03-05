@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"jvmgo/classfile"
 	"jvmgo/classpath"
+	"jvmgo/rtda/heap"
 	"strings"
 )
 
@@ -19,12 +20,22 @@ func main() {
 }
 
 func startJVM(cmd *Cmd) {
+	// 环境变量
 	cp := classpath.Parse(cmd.XjreOption, cmd.cpOption)
 	fmt.Printf("classpath: %v, class:%v, args:%v\n", cp, cmd.class, cmd.args)
+	// 类加载器
+	classLoader := heap.NewClassLoader(cp)
+	// 主类名
 	className := strings.Replace(cmd.class, ".", "/", -1)
-	cf := loadClass(className, cp)
-	fmt.Println(cmd.class)
-	printClassInfo(cf)
+	// 加载主类
+	mainClass := classLoader.LoadClass(className)
+	// 主入口
+	mainMethod := mainClass.GetMainMethod()
+	if mainMethod != nil {
+		interpret(mainMethod)
+	} else {
+		fmt.Printf("Main method not found in class %s\n", cmd.class)
+	}
 }
 
 func loadClass(className string, cp *classpath.Classpath) *classfile.ClassFile {
@@ -37,6 +48,15 @@ func loadClass(className string, cp *classpath.Classpath) *classfile.ClassFile {
 		panic(err)
 	}
 	return cf
+}
+
+func getMainMethod(cf *classfile.ClassFile) *classfile.MemberInfo {
+	for _, m := range cf.Methods() {
+		if m.Name() == "main" && m.Descriptor() == "([Ljava/lang/String;)V" {
+			return m
+		}
+	}
+	return nil
 }
 
 func printClassInfo(cf *classfile.ClassFile) {
@@ -54,4 +74,5 @@ func printClassInfo(cf *classfile.ClassFile) {
 	for _, m := range cf.Methods() {
 		fmt.Printf(" %s\n", m.Name())
 	}
+	fmt.Printf("=========================================================\n")
 }

@@ -2,3 +2,10 @@
 *github.com/*
 *golang.org
 *golang.org/*
+bin/dlv.exe
+bin/go-outline.exe
+bin/go-symbols.exe
+bin/golint.exe
+bin/gorename.exe
+bin/guru.exe
+pkg/*

@@ -52,7 +52,10 @@ func getJreDir(jreOption string) string {
 	}
 	// 使用JAVA_HOME环境变量
 	if jh := os.Getenv("JAVA_HOME"); jh != "" {
-		return filepath.Join(jh, "jre")
+		// jdk11
+		return jh
+		// jdk8
+		// return filepath.Join(jh, "jre")
 	}
 	panic("Can not find jre folder!")
 }
@@ -68,12 +71,16 @@ func exists(path string) bool {
 
 func (self *Classpath) ReadClass(className string) ([]byte, Entry, error) {
 	className = className + ".class"
+	fmt.Printf("ReadClass: %v\n", className)
+	// 启动类加载
 	if data, entry, err := self.bootClasspath.readClass(className); err == nil {
 		return data, entry, err
 	}
+	// 扩展类加载
 	if data, entry, err := self.extClasspath.readClass(className); err == nil {
 		return data, entry, err
 	}
+	// 用户类加载
 	return self.userClasspath.readClass(className)
 }
 
