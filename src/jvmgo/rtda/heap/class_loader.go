@@ -8,14 +8,16 @@ import (
 
 // 类加载器
 type ClassLoader struct {
-	cp       *classpath.Classpath
-	classMap map[string]*Class //loaded classes
+	cp          *classpath.Classpath
+	verboseFlag bool
+	classMap    map[string]*Class //loaded classes
 }
 
-func NewClassLoader(cp *classpath.Classpath) *ClassLoader {
+func NewClassLoader(cp *classpath.Classpath, verboseFlag bool) *ClassLoader {
 	return &ClassLoader{
-		cp:       cp,
-		classMap: make(map[string]*Class),
+		cp:          cp,
+		verboseFlag: verboseFlag,
+		classMap:    make(map[string]*Class),
 	}
 }
 
@@ -24,7 +26,14 @@ func (self *ClassLoader) LoadClass(name string) *Class {
 		// 类已加载
 		return class
 	}
-	return self.loadNonArrayClass(name)
+
+	if name[0] == '[' {
+		// 数组类
+		return self.loadArrayClass(name)
+	} else {
+		// 非数组类
+		return self.loadNonArrayClass(name)
+	}
 }
 
 // 加载非数组类
@@ -35,7 +44,26 @@ func (self *ClassLoader) loadNonArrayClass(name string) *Class {
 	class := self.defineClass(data)
 	// 链接
 	link(class)
-	fmt.Printf("[Loaded %s from %s]\n", name, entry)
+	if self.verboseFlag {
+		fmt.Printf("[Loaded %s from %s]\n", name, entry)
+	}
+	return class
+}
+
+// 加载数组类
+func (self *ClassLoader) loadArrayClass(name string) *Class {
+	class := &Class{
+		accessFlags: ACC_PUBLIC,
+		name:        name,
+		loader:      self,
+		initStarted: true,
+		superClass:  self.LoadClass("java/lang/Object"),
+		interfaces: []*Class{
+			self.LoadClass("java/lang/Cloneable"),
+			self.LoadClass("java/io/Serializable"),
+		},
+	}
+	self.classMap[name] = class
 	return class
 }
 
@@ -168,7 +196,9 @@ func initStaticFinalVar(class *Class, field *Field) {
 			val := cp.GetConstant(cpIndex).(float64)
 			vars.SetDouble(slotID, val)
 		case "Ljava/lang/String;":
-			panic("todo")
+			goStr := cp.GetConstant(cpIndex).(string)
+			jStr := JString(class.Loader(), goStr)
+			vars.SetRef(slotID, jStr)
 		}
 	}
 }

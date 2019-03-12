@@ -20,6 +20,7 @@ type Class struct {
 	instanceSlotCount uint  // 实例变量占据空间大小
 	staticSlotCount   uint  // 类变量占据空间大小
 	staticVars        Slots // 静态变量
+	initStarted       bool  // 表示类的<clinit>方法是否已经开始执行
 }
 
 // 解析成虚拟机可用的类数据
@@ -33,45 +34,6 @@ func newClass(cf *classfile.ClassFile) *Class {
 	class.fields = newFields(class, cf.Fields())
 	class.methods = newMethods(class, cf.Methods())
 	return class
-}
-
-func (self *Class) NewObject() *Object {
-	return newObject(self)
-}
-
-func (self *Class) isAccessibleTo(other *Class) bool {
-	return self.IsPublic() || self.getPackageName() == other.getPackageName()
-}
-
-func (self *Class) getPackageName() string {
-	if i := strings.LastIndex(self.name, "/"); i >= 0 {
-		return self.name[:i]
-	}
-	return ""
-}
-
-func (self *Class) GetMainMethod() *Method {
-	return self.getStaticMethod("main", "([Ljava/lang/String;)V")
-}
-
-func (self *Class) getStaticMethod(name, descriptor string) *Method {
-	for _, method := range self.methods {
-		if method.IsStatic() &&
-			method.name == name &&
-			method.descriptor == descriptor {
-
-			return method
-		}
-	}
-	return nil
-}
-
-func (self *Class) ConstantPool() *ConstantPool {
-	return self.constantPool
-}
-
-func (self *Class) StaticVars() Slots {
-	return self.staticVars
 }
 
 func (self *Class) IsPublic() bool {
@@ -97,4 +59,101 @@ func (self *Class) IsAnnotation() bool {
 }
 func (self *Class) IsEnum() bool {
 	return 0 != self.accessFlags&ACC_ENUM
+}
+
+// getters
+func (self *Class) Name() string {
+	return self.name
+}
+func (self *Class) ConstantPool() *ConstantPool {
+	return self.constantPool
+}
+func (self *Class) Fields() []*Field {
+	return self.fields
+}
+func (self *Class) Methods() []*Method {
+	return self.methods
+}
+func (self *Class) Loader() *ClassLoader {
+	return self.loader
+}
+func (self *Class) SuperClass() *Class {
+	return self.superClass
+}
+func (self *Class) StaticVars() Slots {
+	return self.staticVars
+}
+func (self *Class) InitStarted() bool {
+	return self.initStarted
+}
+
+func (self *Class) StartInit() {
+	self.initStarted = true
+}
+
+// jvms 5.4.4
+func (self *Class) isAccessibleTo(other *Class) bool {
+	return self.IsPublic() ||
+		self.GetPackageName() == other.GetPackageName()
+}
+
+func (self *Class) GetPackageName() string {
+	if i := strings.LastIndex(self.name, "/"); i >= 0 {
+		return self.name[:i]
+	}
+	return ""
+}
+
+func (self *Class) GetMainMethod() *Method {
+	return self.getMethod("main", "([Ljava/lang/String;)V", true)
+}
+func (self *Class) GetClinitMethod() *Method {
+	return self.getMethod("<clinit>", "()V", true)
+}
+
+func (self *Class) getMethod(name, descriptor string, isStatic bool) *Method {
+	for c := self; c != nil; c = c.superClass {
+		for _, method := range c.methods {
+			if method.IsStatic() == isStatic &&
+				method.name == name &&
+				method.descriptor == descriptor {
+
+				return method
+			}
+		}
+	}
+	return nil
+}
+
+func (self *Class) getField(name, descriptor string, isStatic bool) *Field {
+	for c := self; c != nil; c = c.superClass {
+		for _, field := range c.fields {
+			if field.IsStatic() == isStatic &&
+				field.name == name &&
+				field.descriptor == descriptor {
+
+				return field
+			}
+		}
+	}
+	return nil
+}
+
+func (self *Class) isJlObject() bool {
+	return self.name == "java/lang/Object"
+}
+func (self *Class) isJlCloneable() bool {
+	return self.name == "java/lang/Cloneable"
+}
+func (self *Class) isJioSerializable() bool {
+	return self.name == "java/io/Serializable"
+}
+
+func (self *Class) NewObject() *Object {
+	return newObject(self)
+}
+
+func (self *Class) ArrayClass() *Class {
+	arrayClassName := getArrayClassName(self.name)
+	return self.loader.LoadClass(arrayClassName)
 }

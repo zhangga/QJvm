@@ -7,13 +7,15 @@ import (
 )
 
 type Cmd struct {
-	helpFlag    bool
-	versionFlag bool
-	cpOption    string
-	XjreOption  string
-	XssOption   string
-	class       string
-	args        []string
+	helpFlag         bool
+	versionFlag      bool
+	verboseClassFlag bool
+	verboseInstFlag  bool
+	cpOption         string
+	XjreOption       string
+	XssOption        string
+	class            string
+	args             []string
 }
 
 func parseCmd() *Cmd {
@@ -23,6 +25,8 @@ func parseCmd() *Cmd {
 	flag.BoolVar(&cmd.helpFlag, "help", false, "print help message")
 	flag.BoolVar(&cmd.helpFlag, "?", false, "print help message")
 	flag.BoolVar(&cmd.versionFlag, "version", false, "print version and exit")
+	flag.BoolVar(&cmd.verboseClassFlag, "verbose:class", false, "print class loader info")
+	flag.BoolVar(&cmd.verboseInstFlag, "verbose:inst", false, "print instruction execute info")
 	flag.StringVar(&cmd.cpOption, "classpath", "", "classpath")
 	flag.StringVar(&cmd.cpOption, "cp", "", "classpath")
 	flag.StringVar(&cmd.XjreOption, "Xjre", "", "path to jre")
@@ -38,6 +42,12 @@ func parseCmd() *Cmd {
 		cmd.class = "com.kwai.Test"
 		cmd.cpOption = "./../../bin/class/"
 		cmd.XjreOption = "C:\\JAVA\\jdk1.8\\jre\\"
+		cmd.verboseClassFlag = true
+		cmd.verboseInstFlag = true
+		cmd.args = make([]string, 3)
+		cmd.args[0] = "a"
+		cmd.args[1] = "b"
+		cmd.args[2] = "你好"
 	}
 
 	return cmd

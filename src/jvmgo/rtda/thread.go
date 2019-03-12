@@ -30,10 +30,18 @@ func (self *Thread) CurrentFrame() *Frame {
 	return self.stack.top()
 }
 
+func (self *Thread) TopFrame() *Frame {
+	return self.stack.top()
+}
+
 func (self *Thread) PC() int {
 	return self.pc
 }
 
 func (self *Thread) SetPC(pc int) {
 	self.pc = pc
+}
+
+func (self *Thread) IsStackEmpty() bool {
+	return self.stack.IsEmpty()
 }
