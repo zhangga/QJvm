@@ -14,11 +14,14 @@ type ClassLoader struct {
 }
 
 func NewClassLoader(cp *classpath.Classpath, verboseFlag bool) *ClassLoader {
-	return &ClassLoader{
+	loader := &ClassLoader{
 		cp:          cp,
 		verboseFlag: verboseFlag,
 		classMap:    make(map[string]*Class),
 	}
+	loader.loadBasicClasses()
+	loader.loadPrimitiveClasses()
+	return loader
 }
 
 func (self *ClassLoader) LoadClass(name string) *Class {
@@ -27,13 +30,19 @@ func (self *ClassLoader) LoadClass(name string) *Class {
 		return class
 	}
 
+	var class *Class
 	if name[0] == '[' {
 		// 数组类
-		return self.loadArrayClass(name)
+		class = self.loadArrayClass(name)
 	} else {
 		// 非数组类
-		return self.loadNonArrayClass(name)
+		class = self.loadNonArrayClass(name)
 	}
+	if jlClassClass, ok := self.classMap["java/lang/Class"]; ok {
+		class.jClass = jlClassClass.NewObject()
+		class.jClass.extra = class
+	}
+	return class
 }
 
 // 加载非数组类
@@ -65,6 +74,36 @@ func (self *ClassLoader) loadArrayClass(name string) *Class {
 	}
 	self.classMap[name] = class
 	return class
+}
+
+// 加载java/lang/Class及相关类
+func (self *ClassLoader) loadBasicClasses() {
+	jlClassClass := self.LoadClass("java/lang/Class")
+	for _, class := range self.classMap {
+		if class.jClass == nil {
+			class.jClass = jlClassClass.NewObject()
+			class.jClass.extra = class
+		}
+	}
+}
+
+// 加载基础类型
+func (self *ClassLoader) loadPrimitiveClasses() {
+	for primitiveType, _ := range primitiveTypes {
+		self.loadPrimitiveClass(primitiveType)
+	}
+}
+
+func (self *ClassLoader) loadPrimitiveClass(className string) {
+	class := &Class{
+		accessFlags: ACC_PUBLIC,
+		name:        className,
+		loader:      self,
+		initStarted: true,
+	}
+	class.jClass = self.classMap["java/lang/Class"].NewObject()
+	class.jClass.extra = class
+	self.classMap[className] = class
 }
 
 // 读取class文件

@@ -15,11 +15,15 @@ func main() {
 	} else if cmd.helpFlag || cmd.class == "" {
 		printUsage()
 	} else {
+		// 两种方式启动。旧
 		startJVM(cmd)
+		// 新的启动方式。待完善，VM下有部分本地方法未实现。原书最后一章代码。
+		// newJVM(cmd).start()
 	}
 	fmt.Printf("=========JVM RUN SUCCESSFUL=========\n", cmd.class)
 }
 
+// 已过时。旧版。新结构在jvm.go中
 func startJVM(cmd *Cmd) {
 	// 环境变量
 	cp := classpath.Parse(cmd.XjreOption, cmd.cpOption)
@@ -33,7 +37,7 @@ func startJVM(cmd *Cmd) {
 	// 主入口
 	mainMethod := mainClass.GetMainMethod()
 	if mainMethod != nil {
-		interpret(mainMethod, cmd.verboseInstFlag, cmd.args)
+		interpret0(mainMethod, cmd.verboseInstFlag, cmd.args)
 	} else {
 		fmt.Printf("Main method not found in class %s\n", cmd.class)
 	}

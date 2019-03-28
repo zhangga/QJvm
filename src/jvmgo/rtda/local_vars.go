@@ -15,6 +15,10 @@ func newLocalVars(maxLocals uint) LocalVars {
 	return nil
 }
 
+func (self LocalVars) GetThis() *heap.Object {
+	return self.GetRef(0)
+}
+
 func (self LocalVars) SetInt(index uint, val int32) {
 	self[index].num = val
 }

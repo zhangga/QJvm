@@ -17,7 +17,7 @@ func newFrame(thread *Thread, method *heap.Method) *Frame {
 		thread:       thread,
 		method:       method,
 		localVars:    newLocalVars(method.MaxLocals()),
-		operandStack: newOperandStack(method.MaxStack()),
+		operandStack: NewOperandStack(method.MaxStack()),
 	}
 }
 

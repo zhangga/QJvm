@@ -17,10 +17,12 @@ type Class struct {
 	loader            *ClassLoader // 类加载器指针
 	superClass        *Class
 	interfaces        []*Class
-	instanceSlotCount uint  // 实例变量占据空间大小
-	staticSlotCount   uint  // 类变量占据空间大小
-	staticVars        Slots // 静态变量
-	initStarted       bool  // 表示类的<clinit>方法是否已经开始执行
+	instanceSlotCount uint    // 实例变量占据空间大小
+	staticSlotCount   uint    // 类变量占据空间大小
+	staticVars        Slots   // 静态变量
+	initStarted       bool    // 表示类的<clinit>方法是否已经开始执行
+	jClass            *Object // java.lang.Class实例
+	sourceFile        string
 }
 
 // 解析成虚拟机可用的类数据
@@ -33,6 +35,7 @@ func newClass(cf *classfile.ClassFile) *Class {
 	class.constantPool = newConstantPool(class, cf.ConstantPool())
 	class.fields = newFields(class, cf.Fields())
 	class.methods = newMethods(class, cf.Methods())
+	class.sourceFile = getSourceFile(cf)
 	return class
 }
 
@@ -85,6 +88,12 @@ func (self *Class) StaticVars() Slots {
 }
 func (self *Class) InitStarted() bool {
 	return self.initStarted
+}
+func (self *Class) JClass() *Object {
+	return self.jClass
+}
+func (self *Class) SourceFile() string {
+	return self.sourceFile
 }
 
 func (self *Class) StartInit() {
@@ -149,6 +158,11 @@ func (self *Class) isJioSerializable() bool {
 	return self.name == "java/io/Serializable"
 }
 
+func (self *Class) IsPrimitive() bool {
+	_, ok := primitiveTypes[self.name]
+	return ok
+}
+
 func (self *Class) NewObject() *Object {
 	return newObject(self)
 }
@@ -156,4 +170,33 @@ func (self *Class) NewObject() *Object {
 func (self *Class) ArrayClass() *Class {
 	arrayClassName := getArrayClassName(self.name)
 	return self.loader.LoadClass(arrayClassName)
+}
+
+func (self *Class) JavaName() string {
+	return strings.Replace(self.name, "/", ".", -1)
+}
+
+func (self *Class) GetInstanceMethod(name, descriptor string) *Method {
+	return self.getMethod(name, descriptor, false)
+}
+
+func (self *Class) GetStaticMethod(name, descriptor string) *Method {
+	return self.getMethod(name, descriptor, true)
+}
+
+func (self *Class) GetRefVar(fieldName, fieldDescriptor string) *Object {
+	field := self.getField(fieldName, fieldDescriptor, true)
+	return self.staticVars.GetRef(field.slotID)
+}
+
+func (self *Class) SetRefVar(fieldName, fieldDescriptor string, ref *Object) {
+	field := self.getField(fieldName, fieldDescriptor, true)
+	self.staticVars.SetRef(field.slotID, ref)
+}
+
+func getSourceFile(cf *classfile.ClassFile) string {
+	if sfAttr := cf.SourceFileAttribute(); sfAttr != nil {
+		return sfAttr.FileName()
+	}
+	return "Unknown"
 }

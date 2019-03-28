@@ -1,7 +1,6 @@
 package base
 
 import (
-	"fmt"
 	"jvmgo/rtda"
 	"jvmgo/rtda/heap"
 )
@@ -20,16 +19,6 @@ func InvokeMethod(invokerFrame *rtda.Frame, method *heap.Method) {
 			slot := invokerFrame.OperandStack().PopSlot()
 			// 放进被调用方法的局部变量表中
 			newFrame.LocalVars().SetSlot(uint(i), slot)
-		}
-	}
-
-	// hack!
-	if method.IsNative() {
-		if method.Name() == "registerNatives" {
-			thread.PopFrame()
-		} else {
-			panic(fmt.Sprintf("native method: %v.%v%v\n",
-				method.Class().Name(), method.Name(), method.Descriptor()))
 		}
 	}
 }

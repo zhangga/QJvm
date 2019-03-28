@@ -5,7 +5,10 @@ import (
 	"jvmgo/rtda/heap"
 )
 
-// 执行类的初始化操作
+// 执行类的初始化操作。<clinit>
+// 在第一次使用类的时候，包括：
+// 1.调用类的静态属性
+// 2.实例化类的实例
 func InitClass(thread *rtda.Thread, class *heap.Class) {
 	class.StartInit()
 	scheduleClinit(thread, class)

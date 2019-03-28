@@ -45,3 +45,11 @@ func (self *Thread) SetPC(pc int) {
 func (self *Thread) IsStackEmpty() bool {
 	return self.stack.IsEmpty()
 }
+
+func (self *Thread) ClearStack() {
+	self.stack.clear()
+}
+
+func (self *Thread) GetFrames() []*Frame {
+	return self.stack.getFrames()
+}

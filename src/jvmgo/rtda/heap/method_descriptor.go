@@ -18,3 +18,7 @@ func (self *MethodDescriptor) addParameterType(t string) {
 
 	self.parameterTypes = append(self.parameterTypes, t)
 }
+
+func (self *MethodDescriptor) ParameterTypes() []string {
+	return self.parameterTypes
+}

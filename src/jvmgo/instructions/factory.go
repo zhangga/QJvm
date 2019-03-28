@@ -12,6 +12,7 @@ import . "jvmgo/instructions/math"
 import . "jvmgo/instructions/references"
 import . "jvmgo/instructions/stack"
 import . "jvmgo/instructions/stores"
+import . "jvmgo/instructions/reserved"
 
 // NoOperandsInstruction singletons
 var (
@@ -159,10 +160,10 @@ var (
 	areturn     = &ARETURN{}
 	_return     = &RETURN{}
 	arraylength = &ARRAY_LENGTH{}
-	// athrow        = &ATHROW{}
+	athrow      = &ATHROW{}
 	// monitorenter  = &MONITOR_ENTER{}
 	// monitorexit   = &MONITOR_EXIT{}
-	// invoke_native = &INVOKE_NATIVE{}
+	invoke_native = &INVOKE_NATIVE{}
 )
 
 func NewInstruction(opcode byte) base.Instruction {
@@ -549,8 +550,8 @@ func NewInstruction(opcode byte) base.Instruction {
 		return &ANEW_ARRAY{}
 	case 0xbe:
 		return arraylength
-	// case 0xbf:
-	// 	return athrow
+	case 0xbf:
+		return athrow
 	case 0xc0:
 		return &CHECK_CAST{}
 	case 0xc1:
@@ -572,7 +573,8 @@ func NewInstruction(opcode byte) base.Instruction {
 	// case 0xc9:
 	// 	return &JSR_W{}
 	// case 0xca: breakpoint
-	// case 0xfe: impdep1
+	case 0xfe:
+		return invoke_native
 	// case 0xff: impdep2
 	default:
 		panic(fmt.Errorf("Unsupported opcode: 0x%x!", opcode))
